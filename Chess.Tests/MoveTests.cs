@@ -1,6 +1,9 @@
 using Chess;
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
+
 using Xunit;
 
 namespace ChessUnitTests;
@@ -257,13 +260,12 @@ public class MoveTests
     [InlineData("rnb1kbnr/pppppppp/8/8/8/8/5q2/7K w kq - 0 1", 0)]
     // One possible move
     [InlineData("rnb1kbnr/pppppppp/8/8/5P1q/8/PPPPP1PP/RNBQKBNR w KQkq - 0 1", 1)]
-    public void TestMovesCount(string fen, int movesCount)
+    public async Task TestMovesCount(string fen, int movesCount)
     {
-        var board = new ChessBoard();
+        var board = ChessBoard.LoadFromFen(fen);
+        var moves = await board.Moves(false, false);
 
-        board = ChessBoard.LoadFromFen(fen);
-
-        Assert.Equal(movesCount, board.Moves(false, false).Length);
+        Assert.Equal(movesCount, moves.Length);
     }
 
     [Theory]
@@ -273,10 +275,8 @@ public class MoveTests
     [InlineData("r3kbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1", 4, "e1")]
     public void TestMovesCountOnPosition(string fen, int movesCount, string pos)
     {
-        var board = new ChessBoard();
-
-        board = ChessBoard.LoadFromFen(fen);
-
+        var board = ChessBoard.LoadFromFen(fen);
+        
         Assert.Equal(movesCount, board.Moves(new Position(pos), false, false).Length);
     }
 
@@ -364,7 +364,7 @@ public class MoveTests
     [InlineData(null, 20, 400, 8_902)]
     [InlineData("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 44, 1_486, 62_379)]
     [InlineData("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 6, 264, 9_467)]
-    public void TestNumOfMoves(string? fen, int oneCount, int twoCount, int threeCount)
+    public async Task TestNumOfMoves(string? fen, int oneCount, int twoCount, int threeCount)
     {
         var board = new ChessBoard();
 
@@ -373,27 +373,27 @@ public class MoveTests
             board = ChessBoard.LoadFromFen(fen);
         }
 
-        var numOfMoves = CountMoves(board, 1);
+        var numOfMoves = await CountMoves(board, 1);
         Assert.Equal(oneCount, numOfMoves);
 
-        numOfMoves = CountMoves(board, 2);
+        numOfMoves = await CountMoves(board, 2);
         Assert.Equal(twoCount, numOfMoves);
 
-        numOfMoves = CountMoves(board, 3);
+        numOfMoves = await CountMoves(board, 3);
         Assert.Equal(threeCount, numOfMoves);
     }
 
-    public int CountMoves(ChessBoard board, int depth)
+    public async Task<int> CountMoves(ChessBoard board, int depth)
     {
         if (depth == 0)
             return 1;
 
         var numOfMoves = 0;
 
-        foreach (var move in board.Moves(false, false))
+        foreach (var move in await board.Moves(false, false))
         {
             board.Move(move);
-            numOfMoves += CountMoves(board, depth - 1);
+            numOfMoves += await CountMoves(board, depth - 1);
             board.Cancel();
         }
 
@@ -449,10 +449,10 @@ public class MoveTests
     }
 
     [Fact]
-    public void Moves_QueenPromotion_ShouldHaveSan()
+    public async Task Moves_QueenPromotion_ShouldHaveSan()
     {
         var board = ChessBoard.LoadFromFen("8/6P1/8/2k5/8/8/8/K7 w - - 0 1");
-        var moves = board.Moves(generateSan: true);
+        var moves = await board.Moves(generateSan: true);
 
         Assert.All(moves, m => Assert.NotNull(m.San));
 

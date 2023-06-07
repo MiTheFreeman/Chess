@@ -64,7 +64,7 @@ public partial class ChessBoard
     private void AddPromotionMoves(List<Move> moves, Move move, bool generateSan, PromotionType skipPromotion)
     {
         if (skipPromotion == PromotionType.Default) skipPromotion = PromotionType.ToQueen;
-        
+
         moves.Add(new Move(move, skipPromotion));
         if (generateSan)
         {
@@ -80,7 +80,7 @@ public partial class ChessBoard
             PromotionType.ToKnight
         };
         promotions.Remove(skipPromotion);
-        
+
         foreach (var promotion in promotions)
         {
             var newMove = new Move(move, promotion);
@@ -103,7 +103,7 @@ public partial class ChessBoard
     /// <param name="allowAmbiguousCastle">Whether Castle move will be e1-g1 AND also e1-h1 which is in fact the same O-O</param>
     /// <param name="generateSan">San notation needs to be generated</param>
     /// <returns>All generated moves</returns>
-    public Move[] Moves(bool allowAmbiguousCastle = false, bool generateSan = true)
+    public async Task<Move[]> Moves(bool allowAmbiguousCastle = false, bool generateSan = true)
     {
         var moves = new ConcurrentBag<Move>();
         var tasks = new List<Task>();
@@ -129,7 +129,7 @@ public partial class ChessBoard
             }
         }
 
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
         return moves.ToArray();
     }
 
@@ -180,10 +180,10 @@ public partial class ChessBoard
     private static void GenerateKingPositions(Position piecePosition, ChessBoard board, List<Position> positions)
     {
         for (short x = (short)Math.Max(0, piecePosition.X - 1); x <= Math.Min(7, piecePosition.X + 1); x++)
-        for (short y = (short)Math.Max(0, piecePosition.Y - 1); y <= Math.Min(7, piecePosition.Y + 1); y++)
-            if (x != piecePosition.X || y != piecePosition.Y)
-                if (board[x, y] == null || board[x, y].Color != board[piecePosition].Color)
-                    positions.Add(new Position(x, y));
+            for (short y = (short)Math.Max(0, piecePosition.Y - 1); y <= Math.Min(7, piecePosition.Y + 1); y++)
+                if (x != piecePosition.X || y != piecePosition.Y)
+                    if (board[x, y] == null || board[x, y].Color != board[piecePosition].Color)
+                        positions.Add(new Position(x, y));
 
         if (piecePosition.Y % 7 == 0 && piecePosition.X == 4)
         {
