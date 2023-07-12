@@ -18,7 +18,7 @@ public partial class ChessBoard
     /// <param name="allowAmbiguousCastle">Whether Castle move will be e1-g1 AND also e1-h1 which is in fact the same O-O</param>
     /// <param name="generateSan">Whether SAN notation needs to be generated. For higher productivity => set to false</param>
     /// <returns>All available moves for given piece</returns>
-    public Move[] Moves(Position piecePosition, bool allowAmbiguousCastle = false, bool generateSan = true)
+    public Move[] Moves(Position piecePosition, bool allowAmbiguousCastle = false, bool generateSan = true, bool checkTurn = true)
     {
         if (pieces[piecePosition.Y, piecePosition.X] is null)
             throw new ChessPieceNotFoundException(this, piecePosition);
@@ -30,7 +30,7 @@ public partial class ChessBoard
         {
             Move move = new(piecePosition, position);
 
-            if (!IsValidMove(move, this, false, true))
+            if (!IsValidMove(move, this, false, checkTurn))
             {
                 continue;
             }
@@ -103,7 +103,7 @@ public partial class ChessBoard
     /// <param name="allowAmbiguousCastle">Whether Castle move will be e1-g1 AND also e1-h1 which is in fact the same O-O</param>
     /// <param name="generateSan">San notation needs to be generated</param>
     /// <returns>All generated moves</returns>
-    public async Task<Move[]> Moves(bool allowAmbiguousCastle = false, bool generateSan = true)
+    public async Task<Move[]> Moves(bool allowAmbiguousCastle = false, bool generateSan = true, bool checkTurn = true)
     {
         var moves = new ConcurrentBag<Move>();
         var tasks = new List<Task>();
@@ -119,7 +119,7 @@ public partial class ChessBoard
 
                     tasks.Add(Task.Run(() =>
                     {
-                        var generatedMoves = Moves(new Position { Y = y, X = x }, allowAmbiguousCastle, generateSan);
+                        var generatedMoves = Moves(new Position { Y = y, X = x }, allowAmbiguousCastle, generateSan, checkTurn);
                         foreach (var move in generatedMoves)
                         {
                             moves.Add(move);

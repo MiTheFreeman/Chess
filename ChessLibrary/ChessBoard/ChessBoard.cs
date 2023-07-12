@@ -59,6 +59,35 @@ public partial class ChessBoard
     public bool LoadedFromFen => FenBuilder is not null;
 
     /// <summary>
+    /// Get all pieces on the board
+    /// </summary>
+    /// <returns></returns>
+    public Piece[] GetPieces() => pieces.Cast<Piece>().Where(p => p != null).ToArray();
+
+    /// <summary>
+    /// Get all pieces on the board
+    /// </summary>
+    /// <returns></returns>
+    public Dictionary<Position, Piece> GetPiecesWithPosition()
+    {
+        Dictionary<Position, Piece> dict = new Dictionary<Position, Piece>();
+
+        for (short x = 0; x < 8; x++)
+        {
+            for (short y = 0; y < 8; y++)
+            {
+                var piece = this[x, y];
+                if (piece != null)
+                {
+                    dict.Add(new Position(x, y), piece);
+                }
+            }
+        }
+
+        return dict;
+    }
+
+    /// <summary>
     /// Determinize whose player turn is it now
     /// </summary>
     public PieceColor Turn
@@ -252,7 +281,7 @@ public partial class ChessBoard
     /// <summary>
     /// To execute operations and to not corrupt the main chess object
     /// </summary>
-    internal ChessBoard(Piece?[,] pieces, List<Move> moves)
+    private ChessBoard(Piece?[,] pieces, List<Move> moves)
     {
         executedMoves = new List<Move>(moves);
         this.pieces = (Piece[,])pieces.Clone();
@@ -344,7 +373,7 @@ public partial class ChessBoard
     /// Puts given piece on given position<br/>
     /// Warning! Checked state and end game state is not being updated
     /// </summary>
-    private void Put(Piece piece, Position position)
+    public void Put(Piece piece, Position position)
     {
         pieces[position.Y, position.X] = piece;
     }
@@ -353,7 +382,7 @@ public partial class ChessBoard
     /// Removes a piece on given position from board<br/>
     /// Warning! Checked state and end game state is not being updated
     /// </summary>
-    private void Remove(Position position)
+    public void Remove(Position position)
     {
         pieces[position.Y, position.X] = null;
     }
@@ -528,6 +557,15 @@ public partial class ChessBoard
     internal void HandleEndGame()
     {
         EndGame = new EndGameProvider(this).GetEndGameInfo();
+    }
+
+    /// <summary>
+    /// Slow clone
+    /// </summary>
+    /// <returns></returns>
+    public ChessBoard Clone()
+    {
+        return new ChessBoard(pieces, DisplayedMoves) { FenBuilder = FenBuilder, moveIndex = MoveIndex };
     }
 
     private void SetChessBeginSituation()

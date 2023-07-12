@@ -460,4 +460,17 @@ public class MoveTests
 
         Assert.Equal("g8=Q", move.San);
     }
+
+    [Fact]
+    public void Test()
+    {
+        var board = new ChessBoard();
+        var moves = board.Moves(new Position(0,1), checkTurn: false);
+
+        Assert.Equal(2, moves.Length);
+
+        moves = board.Moves(new Position(0, 6), checkTurn: false);
+
+        Assert.Equal(2, moves.Length);
+    }
 }

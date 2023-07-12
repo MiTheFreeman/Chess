@@ -35,12 +35,14 @@ public partial class ChessBoard
     /// Raises when any piece has been captured
     /// </summary>
     public event ChessCaptureEventHandler? OnCaptured = delegate { };
-    private SynchronizationContext? context = SynchronizationContext.Current;
+
+    private static bool contextDisabled = false;
+    private SynchronizationContext? context = contextDisabled ? null : SynchronizationContext.Current;
 
     /// <summary>
     /// Disable synchronization context for events
     /// </summary>
-    public void DisableSyncContext() => context = null;
+    public static void DisableSyncContext() => contextDisabled = true;
 
     private void OnWhiteKingCheckedChangedEvent(CheckEventArgs e)
     {

@@ -31,17 +31,17 @@ internal class RepetitionRule : EndGameRule
             var currentIndex = board.MoveIndex;
 
             HashSet<ChessBoard> piecesPositions = new HashSet<ChessBoard>(new ChessBoardComparer());
-            piecesPositions.Add(new ChessBoard(board.pieces, board.DisplayedMoves) { FenBuilder = board.FenBuilder, moveIndex = board.MoveIndex });
+            piecesPositions.Add(board.Clone());
 
             board.MoveIndex -= MINIMUM_MOVES_COUNT;
 
-            piecesPositions.Add(new ChessBoard(board.pieces, board.DisplayedMoves) { FenBuilder = board.FenBuilder, moveIndex = board.MoveIndex });
+            piecesPositions.Add(board.Clone());
 
             if (piecesPositions.Count == 1)
             {
                 board.MoveIndex += (MINIMUM_MOVES_COUNT / 2);
 
-                piecesPositions.Add(new ChessBoard(board.pieces, board.DisplayedMoves) { FenBuilder = board.FenBuilder, moveIndex = board.MoveIndex });
+                piecesPositions.Add(board.Clone());
             }
 
             board.MoveIndex = currentIndex; // Setting back to original positions
