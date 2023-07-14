@@ -128,6 +128,79 @@ public partial class ChessBoard
         }
     }
 
+    internal static bool IsValidDefendMove(Move move, ChessBoard board, bool raise, bool checkTurn)
+    {
+        if (move is null || !move.HasValue)
+            throw new ArgumentNullException(nameof(move));
+
+        if (board.pieces[move.OriginalPosition.P] is null)
+            throw new ChessPieceNotFoundException(board, move.OriginalPosition);
+
+        if (checkTurn && board.pieces[move.OriginalPosition.P].Color != board.Turn) return false;
+
+        if (move.OriginalPosition == move.NewPosition) return false;
+
+        move.Piece = board.pieces[move.OriginalPosition.P];
+        move.IsCheck = false;
+        move.IsMate = false;
+        move.CapturedPiece = null;
+        move.San = null;
+
+        MovePromotion? promParams = null;
+        // Promotion result can be already specified so we dont need to invoke event again to ask for prom result
+        if (move.Parameter is MovePromotion p)
+        {
+            promParams = new MovePromotion(p.PromotionType);
+        }
+
+        move.Parameter = null;
+
+        bool isValid = IsValidDefendMove(move, board);
+        // If is not valid => don't validate further
+        bool isChecked = !isValid;
+
+        if (!isChecked)
+        {
+            // Capture
+            if (board.pieces[move.NewPosition.P] is not null
+                && board.pieces[move.NewPosition.P].Color != move.Piece.Color)
+            {
+                move.CapturedPiece = board.pieces[move.NewPosition.P];
+            }
+
+            // Promote, Invoke event only when raises == true AND promotion parameters has been not specified yet
+            if (move.Parameter is MovePromotion promotion)
+            {
+                if (promParams != null && promParams.PromotionType != PromotionType.Default)
+                {
+                    move.Parameter = promParams;
+                }
+                else if (raise)
+                {
+                    var args = new PromotionEventArgs(board);
+                    board.OnPromotePawnEvent(args);
+                    promotion.PromotionType = args.PromotionResult;
+                }
+            }
+
+            // Check on opposite king
+            move.IsCheck = IsKingCheckedValidation(move, move.Piece.Color.OppositeColor(), board);
+
+            // Opposite king is in (stale)mate
+            move.IsMate = !PlayerHasMovesValidation(move, move.Piece.Color.OppositeColor(), board);
+
+            return true;
+        }
+        else
+        {
+            if (isValid && raise)
+            {
+                board.OnInvalidMoveKingCheckedEvent(new CheckEventArgs(board, move.Piece.Color == PieceColor.White ? board.WhiteKing : board.BlackKing, true));
+            }
+            return false;
+        }
+    }
+
     internal static bool IsValidMove(Move move, ChessBoard board)
     {
         return move.Piece.Type switch
@@ -138,6 +211,20 @@ public partial class ChessBoard
             var e when e == PieceType.Bishop => BishopValidation(move, board.pieces),
             var e when e == PieceType.Queen => QueenValidation(move, board.pieces),
             var e when e == PieceType.King => KingValidation(move, board),
+            _ => false
+        };
+    }
+
+    internal static bool IsValidDefendMove(Move move, ChessBoard board)
+    {
+        return move.Piece.Type switch
+        {
+            var e when e == PieceType.Pawn => PawnDefendValidation(move, board),
+            var e when e == PieceType.Rook => RookDefendValidation(move, board.pieces),
+            var e when e == PieceType.Knight => KnightDefendValidation(move, board.pieces),
+            var e when e == PieceType.Bishop => BishopDefendValidation(move, board.pieces),
+            var e when e == PieceType.Queen => QueenDefendValidation(move, board.pieces),
+            var e when e == PieceType.King => KingDefendValidation(move, board),
             _ => false
         };
     }
@@ -432,6 +519,128 @@ public partial class ChessBoard
                 }
             }
         }
+        return false;
+    }
+
+    // defend
+    private static bool PawnDefendValidation(Move move, ChessBoard board)
+    {
+        short v = (short)(move.NewPosition.Y - move.OriginalPosition.Y); // Vertical difference
+        short h = (short)(move.NewPosition.X - move.OriginalPosition.X); // Horizontal difference
+
+        short stepV = Math.Abs(v);
+        short stepH = Math.Abs(h);
+
+        // If moving forwards
+        if ((move.Piece.Color == PieceColor.White && v > 0) || (move.Piece.Color == PieceColor.Black && v < 0))
+        {
+            // Second condition horizontal taking piece
+            if (stepV == 1 && stepH == 1
+                                && board.pieces[move.NewPosition.P] is null)
+            {
+                ValidHandle();
+                return true;
+            }
+            // Second condition horizontal taking piece
+            if (stepV == 1 && stepH == 1
+                                && board.pieces[move.NewPosition.P] is not null
+                                && move.Piece.Color == board.pieces[move.NewPosition.P].Color)
+            {
+                ValidHandle();
+                return true;
+            }
+        }
+        return false;
+
+        void ValidHandle()
+        {
+            // If Promoting pawn
+            if (move.NewPosition.Y == 7 || move.NewPosition.Y == 0)
+            {
+                move.Parameter = new MovePromotion(PromotionType.Default);
+            }
+        }
+    }
+
+    private static bool QueenDefendValidation(Move move, Piece?[] pieces)
+    {
+        // For queen just using validation of bishop OR rook
+        return BishopDefendValidation(move, pieces) || RookDefendValidation(move, pieces);
+    }
+
+    private static bool RookDefendValidation(Move move, Piece?[] pieces)
+    {
+        var v = move.NewPosition.Y - move.OriginalPosition.Y; // Vertical difference
+        var h = move.NewPosition.X - move.OriginalPosition.X; // Horizontal difference
+
+        // if moving horizontally or vertically
+        if (v == 0 || h == 0)
+        {
+            // These vars are always 1 or -1, one of them will stay 0
+            var stepH = h != 0 ? Math.Abs(h) / h : 0;
+            var stepV = v != 0 ? Math.Abs(v) / v : 0;
+
+            // A bit too difficult for loop to explain
+            for (int i = move.OriginalPosition.Y + stepV, j = move.OriginalPosition.X + stepH;
+                 Math.Abs(i - move.NewPosition.Y - (j - move.NewPosition.X)) >= 0;
+                 i += stepV, j += stepH)
+            {
+                if (pieces[j + i * 8] is not null)
+                {
+                    return i == move.NewPosition.Y && j == move.NewPosition.X && move.Piece.Color == pieces[j + i * 8].Color;
+                }
+            }
+            // This return will never be reached (in theory)
+            return false;
+        }
+        else return false;
+    }
+
+    private static bool KnightDefendValidation(Move move, Piece?[] pieces)
+    {
+        // New position must be with stepH = 1 and steV = 2 or vice versa
+        if ((Math.Abs(move.NewPosition.X - move.OriginalPosition.X) == 2 && Math.Abs(move.NewPosition.Y - move.OriginalPosition.Y) == 1)
+            || (Math.Abs(move.NewPosition.X - move.OriginalPosition.X) == 1 && Math.Abs(move.NewPosition.Y - move.OriginalPosition.Y) == 2))
+        {
+            return pieces[move.NewPosition.P] is not null && pieces[move.NewPosition.P].Color == move.Piece.Color;
+        }
+        else return false;
+    }
+
+    private static bool BishopDefendValidation(Move move, Piece?[] pieces)
+    {
+        var v = move.NewPosition.Y - move.OriginalPosition.Y; // Vertical difference
+        var h = move.NewPosition.X - move.OriginalPosition.X; // Horizontal difference
+
+        // If moving diagonal
+        if (Math.Abs(v) == Math.Abs(h))
+        {
+            // These vars are always 1 or -1
+            var stepV = Math.Abs(v) / v;
+            var stepH = Math.Abs(h) / h;
+
+            // A bit too difficult for loop to explain
+            for (int i = move.OriginalPosition.Y + stepV, j = move.OriginalPosition.X + stepH; Math.Abs(i - move.NewPosition.Y) >= 0; i += stepV, j += stepH)
+            {
+                if (pieces[j + i * 8] is not null)
+                {
+                    return i == move.NewPosition.Y && j == move.NewPosition.X && move.Piece.Color == pieces[j + i * 8].Color;
+                }
+            }
+            // This return will never be reached (in theory)
+            return false;
+        }
+        else return false;
+    }
+
+    private static bool KingDefendValidation(Move move, ChessBoard board)
+    {
+        if (Math.Abs(move.NewPosition.X - move.OriginalPosition.X) < 2 && Math.Abs(move.NewPosition.Y - move.OriginalPosition.Y) < 2)
+        {
+            // Piece(if exist) has different color than king
+            return board.pieces[move.NewPosition.P] is not null && board.pieces[move.NewPosition.P].Color == move.Piece.Color;
+        }
+
         return false;
     }
 
