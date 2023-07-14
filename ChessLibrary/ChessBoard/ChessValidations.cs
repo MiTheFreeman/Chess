@@ -43,17 +43,17 @@ public partial class ChessBoard
 
     private static Position GetKingPosition(PieceColor side, ChessBoard board)
     {
-        var kingPos = new Position();
         for (short i = 0; i < 8 * 8; i++)
         {
-            if (board.pieces[i]?.Color == side && board.pieces[i]?.Type == PieceType.King)
+            var piece = board.pieces[i];
+            if (piece?.Color == side && piece.Type == PieceType.King)
             {
-                kingPos = new Position(i);
-                return kingPos;
+                return new Position(i);
             }
         }
-        return kingPos;
+        return new Position();
     }
+
 
     internal static bool IsValidMove(Move move, ChessBoard board, bool raise, bool checkTurn)
     {
@@ -148,18 +148,19 @@ public partial class ChessBoard
     /// </summary>
     internal static bool IsKingCheckedValidation(Move move, PieceColor side, ChessBoard board)
     {
-        var fboard = new ChessBoard(board.pieces, board.executedMoves);
+        var fboard = board.Clone();
 
         // If validating castle move
-        if (move.Parameter is MoveCastle castle && move.Piece.Color == side
-                                                && move.Piece is not null) // move.Piece is null only when calling recursively
+        if (move.Parameter is MoveCastle castle && move.Piece.Color == side)
         {
-            var kingPos = GetKingPosition(side, board);
+            var kingPos = move.OriginalPosition;
             short step = (short)(castle.CastleType == CastleType.King ? 1 : -1);
 
             for (short i = kingPos.X; i < 7 && i > 1; i += step)
-                if (IsKingCheckedValidation(new(kingPos, new Position(i, kingPos.Y)), side, board))
+            {
+                if (IsKingCheckedValidation(new Move(kingPos, new Position(i, kingPos.Y)), side, board))
                     return true;
+            }
 
             return false;
         }
@@ -171,6 +172,7 @@ public partial class ChessBoard
 
         return IsKingChecked(side, fboard);
     }
+
 
     private static bool IsKingChecked(PieceColor side, ChessBoard board)
     {

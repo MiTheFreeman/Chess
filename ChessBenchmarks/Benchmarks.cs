@@ -86,13 +86,13 @@ public class ChessGenerateMovesBenchmark
     [Benchmark]
     public void MovesSanFalse()
     {
-        new ChessBoard().MovesAsync(generateSan: false);
+        new ChessBoard().Moves(generateSan: false);
     }
 
     [Benchmark]
     public void MovesSanTrue()
     {
-        new ChessBoard().MovesAsync(generateSan: true);
+        new ChessBoard().Moves(generateSan: true);
     }
 
     //  Tests:
@@ -377,7 +377,7 @@ public class ChessOverallBenchmark
 
         foreach (var move in moves)
         {
-            var generatedMoves = board.MovesAsync();
+            var generatedMoves = board.Moves();
             var succeed = board.Move(move);
         }
 
