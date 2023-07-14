@@ -39,7 +39,7 @@ internal class InsufficientMaterialRule : EndGameRule
                                                 || p.Type == PieceType.Rook) > 0;
 
         // The only piece remaining will be Bishop or Knight, what results in draw
-        return !hasStrongPieces && pieces.Count(p => p.Type != PieceType.King) == 1;;
+        return !hasStrongPieces && pieces.Count(p => p.Type != PieceType.King) == 1; ;
     }
 
     private bool IsThirdLevelDraw(List<Piece> pieces)
@@ -71,13 +71,10 @@ internal class InsufficientMaterialRule : EndGameRule
     {
         var bishopsCoords = new List<Position>();
 
-        for (short i = 0; i < board.pieces.GetLength(0) && bishopsCoords.Count < 2; i++)
+        for (short i = 0; i < 8 * 8 && bishopsCoords.Count < 2; i++)
         {
-            for (short j = 0; j < board.pieces.GetLength(1) && bishopsCoords.Count < 2; j++)
-            {
-                if (board.pieces[i, j]?.Type == PieceType.Bishop)
-                    bishopsCoords.Add(new Position(i, j));
-            }
+            if (board.pieces[i]?.Type == PieceType.Bishop)
+                bishopsCoords.Add(new Position(i));
         }
 
         return (bishopsCoords[0].X + bishopsCoords[1].X + bishopsCoords[0].Y + bishopsCoords[1].Y) % 2 == 0;

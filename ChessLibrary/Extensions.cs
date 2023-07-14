@@ -21,48 +21,39 @@ internal static class Extensions
         second = list.Count > 1 ? list[1] : default; // or throw
     }
 
-    internal static List<Piece> PiecesList(this Piece?[,] pieces)
+    internal static List<Piece> PiecesList(this Piece?[] pieces)
     {
         var list = new List<Piece>();
 
-        for (int i = 0; i < pieces.GetLength(0); i++)
+        for (int i = 0; i < 8 * 8; i++)
         {
-            for (int j = 0; j < pieces.GetLength(1); j++)
-            {
-                if (pieces[i, j] is not null)
-                    list.Add(pieces[i, j]);
-            }
+            if (pieces[i] is not null)
+                list.Add(pieces[i]);
         }
 
         return list;
     }
 
-    public static Span<Piece> PiecesSpan(this Piece[,] pieces)
+    public static Span<Piece> PiecesSpan(this Piece[] pieces)
     {
-        var piecesLength1 = pieces.GetLength(0);
-        var piecesLength2 = pieces.GetLength(1);
-
         int nonNullCount = 0;
-        for (int i = 0; i < piecesLength1; i++)
+        for (int i = 0; i < 8 * 8; i++)
         {
-            for (int j = 0; j < piecesLength2; j++)
+            if (pieces[i] != null)
             {
-                if (pieces[i, j] != null)
-                {
-                    nonNullCount++;
-                }
+                nonNullCount++;
             }
         }
 
         var piecesFlat = new Piece[nonNullCount];
         int offset = 0;
-        for (int i = 0; i < piecesLength1 && offset < piecesFlat.Length; i++)
+        for (int i = 0; i < 8 && offset < piecesFlat.Length; i++)
         {
-            for (int j = 0; j < piecesLength2 && offset < piecesFlat.Length; j++)
+            for (int j = 0; j < 8 && offset < piecesFlat.Length; j++)
             {
-                if (pieces[i, j] != null)
+                if (pieces[j + i * 8] != null)
                 {
-                    piecesFlat[offset++] = pieces[i, j];
+                    piecesFlat[offset++] = pieces[j + i * 8];
                 }
             }
         }

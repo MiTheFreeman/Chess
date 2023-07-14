@@ -41,8 +41,8 @@ public partial class ChessBoard
             {
                 builder.Append(' ');
 
-                if (pieces[i, j] is not null)
-                    builder.Append(pieces[i, j].ToFenChar());
+                if (pieces[j + i * 8] is not null)
+                    builder.Append(pieces[j + i * 8].ToFenChar());
                 else
                     builder.Append('.');
 

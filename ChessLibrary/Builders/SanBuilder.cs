@@ -238,22 +238,19 @@ internal static class SanBuilder
 
     private static IEnumerable<Move> GetMovesOfPieceOnPosition(Piece piece, Position newPosition, ChessBoard board)
     {
-        for (short i = 0; i < 8; i++)
+        for (short i = 0; i < 8 * 8; i++)
         {
-            for (short j = 0; j < 8; j++)
+            if (board.pieces[i] is not null
+                && board.pieces[i].Color == piece.Color
+                && board.pieces[i].Type == piece.Type)
             {
-                if (board.pieces[i, j] is not null
-                    && board.pieces[i, j].Color == piece.Color
-                    && board.pieces[i, j].Type == piece.Type)
-                {
-                    // if original pos == new pos
-                    if (newPosition.Y == i && newPosition.X == j) continue;
+                // if original pos == new pos
+                if (newPosition.P == i) continue;
 
-                    var move = new Move(new Position { Y = i, X = j }, newPosition) { Piece = piece };
+                var move = new Move(new Position(i), newPosition) { Piece = piece };
 
-                    if (ChessBoard.IsValidMove(move, board) && !ChessBoard.IsKingCheckedValidation(move, piece.Color, board))
-                        yield return move;
-                }
+                if (ChessBoard.IsValidMove(move, board) && !ChessBoard.IsKingCheckedValidation(move, piece.Color, board))
+                    yield return move;
             }
         }
     }

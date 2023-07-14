@@ -14,13 +14,13 @@ namespace Chess;
 /// </summary>
 public partial class ChessBoard
 {
-    internal Piece?[,] pieces;
+    internal Piece?[] pieces;
 
     /// <summary>
     /// Returns Piece on given position
     /// </summary>
     /// <param name="pos">Position on chess board</param>
-    public Piece? this[Position pos] => pieces[pos.Y, pos.X];
+    public Piece? this[Position pos] => pieces[pos.P];
 
     /// <summary>
     /// Returns Piece on given position
@@ -43,7 +43,7 @@ public partial class ChessBoard
     /// </summary>
     /// <param name="x">0->8</param>
     /// <param name="y">0->8</param>
-    public Piece? this[short x, short y] => pieces[y, x];
+    public Piece? this[short x, short y] => pieces[x + y * 8];
 
     internal readonly Dictionary<string, string> headers;
 
@@ -281,10 +281,10 @@ public partial class ChessBoard
     /// <summary>
     /// To execute operations and to not corrupt the main chess object
     /// </summary>
-    private ChessBoard(Piece?[,] pieces, List<Move> moves)
+    private ChessBoard(Piece?[] pieces, List<Move> moves)
     {
         executedMoves = new List<Move>(moves);
-        this.pieces = (Piece[,])pieces.Clone();
+        this.pieces = (Piece[])pieces.Clone();
     }
 
     /// <summary>
@@ -375,7 +375,7 @@ public partial class ChessBoard
     /// </summary>
     public void Put(Piece piece, Position position)
     {
-        pieces[position.Y, position.X] = piece;
+        pieces[position.P] = piece;
     }
 
     /// <summary>
@@ -384,7 +384,7 @@ public partial class ChessBoard
     /// </summary>
     public void Remove(Position position)
     {
-        pieces[position.Y, position.X] = null;
+        pieces[position.P] = null;
     }
 
     /// <summary>
@@ -496,19 +496,19 @@ public partial class ChessBoard
     internal static void DropPiece(Move move, ChessBoard board)
     {
         // Moving piece to its new position
-        board.pieces[move.NewPosition.Y, move.NewPosition.X] = new(board.pieces[move.OriginalPosition.Y, move.OriginalPosition.X].Color, board.pieces[move.OriginalPosition.Y, move.OriginalPosition.X].Type);
+        board.pieces[move.NewPosition.P] = new(board.pieces[move.OriginalPosition.P].Color, board.pieces[move.OriginalPosition.P].Type);
 
         // Clearing old position
-        board.pieces[move.OriginalPosition.Y, move.OriginalPosition.X] = null;
+        board.pieces[move.OriginalPosition.P] = null;
     }
 
     internal static void RestorePiece(Move move, ChessBoard board)
     {
         // Moving piece to its original position
-        board.pieces[move.OriginalPosition.Y, move.OriginalPosition.X] = new(board.pieces[move.NewPosition.Y, move.NewPosition.X].Color, board.pieces[move.NewPosition.Y, move.NewPosition.X].Type);
+        board.pieces[move.OriginalPosition.P] = new(board.pieces[move.NewPosition.P].Color, board.pieces[move.NewPosition.P].Type);
 
         // Clearing new position / or setting captured piece back
-        board.pieces[move.NewPosition.Y, move.NewPosition.X] = move.CapturedPiece;
+        board.pieces[move.NewPosition.P] = move.CapturedPiece;
     }
 
     private void DisplayMoves(List<Move> moves)
@@ -570,42 +570,42 @@ public partial class ChessBoard
 
     private void SetChessBeginSituation()
     {
-        pieces = new Piece[8, 8];
+        pieces = new Piece[8 * 8];
 
-        pieces[0, 0] = new Piece(PieceColor.White, PieceType.Rook);
-        pieces[0, 1] = new Piece(PieceColor.White, PieceType.Knight);
-        pieces[0, 2] = new Piece(PieceColor.White, PieceType.Bishop);
-        pieces[0, 3] = new Piece(PieceColor.White, PieceType.Queen);
-        pieces[0, 4] = new Piece(PieceColor.White, PieceType.King);
-        pieces[0, 5] = new Piece(PieceColor.White, PieceType.Bishop);
-        pieces[0, 6] = new Piece(PieceColor.White, PieceType.Knight);
-        pieces[0, 7] = new Piece(PieceColor.White, PieceType.Rook);
+        pieces[0] = new Piece(PieceColor.White, PieceType.Rook);
+        pieces[1] = new Piece(PieceColor.White, PieceType.Knight);
+        pieces[2] = new Piece(PieceColor.White, PieceType.Bishop);
+        pieces[3] = new Piece(PieceColor.White, PieceType.Queen);
+        pieces[4] = new Piece(PieceColor.White, PieceType.King);
+        pieces[5] = new Piece(PieceColor.White, PieceType.Bishop);
+        pieces[6] = new Piece(PieceColor.White, PieceType.Knight);
+        pieces[7] = new Piece(PieceColor.White, PieceType.Rook);
 
-        pieces[1, 0] = new Piece(PieceColor.White, PieceType.Pawn);
-        pieces[1, 1] = new Piece(PieceColor.White, PieceType.Pawn);
-        pieces[1, 2] = new Piece(PieceColor.White, PieceType.Pawn);
-        pieces[1, 3] = new Piece(PieceColor.White, PieceType.Pawn);
-        pieces[1, 4] = new Piece(PieceColor.White, PieceType.Pawn);
-        pieces[1, 5] = new Piece(PieceColor.White, PieceType.Pawn);
-        pieces[1, 6] = new Piece(PieceColor.White, PieceType.Pawn);
-        pieces[1, 7] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 0] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 1] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 2] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 3] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 4] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 5] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 6] = new Piece(PieceColor.White, PieceType.Pawn);
+        pieces[8 * 1 + 7] = new Piece(PieceColor.White, PieceType.Pawn);
 
-        pieces[6, 0] = new Piece(PieceColor.Black, PieceType.Pawn);
-        pieces[6, 1] = new Piece(PieceColor.Black, PieceType.Pawn);
-        pieces[6, 2] = new Piece(PieceColor.Black, PieceType.Pawn);
-        pieces[6, 3] = new Piece(PieceColor.Black, PieceType.Pawn);
-        pieces[6, 4] = new Piece(PieceColor.Black, PieceType.Pawn);
-        pieces[6, 5] = new Piece(PieceColor.Black, PieceType.Pawn);
-        pieces[6, 6] = new Piece(PieceColor.Black, PieceType.Pawn);
-        pieces[6, 7] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 0] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 1] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 2] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 3] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 4] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 5] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 6] = new Piece(PieceColor.Black, PieceType.Pawn);
+        pieces[8 * 6 + 7] = new Piece(PieceColor.Black, PieceType.Pawn);
 
-        pieces[7, 0] = new Piece(PieceColor.Black, PieceType.Rook);
-        pieces[7, 1] = new Piece(PieceColor.Black, PieceType.Knight);
-        pieces[7, 2] = new Piece(PieceColor.Black, PieceType.Bishop);
-        pieces[7, 3] = new Piece(PieceColor.Black, PieceType.Queen);
-        pieces[7, 4] = new Piece(PieceColor.Black, PieceType.King);
-        pieces[7, 5] = new Piece(PieceColor.Black, PieceType.Bishop);
-        pieces[7, 6] = new Piece(PieceColor.Black, PieceType.Knight);
-        pieces[7, 7] = new Piece(PieceColor.Black, PieceType.Rook);
+        pieces[8 * 7 + 0] = new Piece(PieceColor.Black, PieceType.Rook);
+        pieces[8 * 7 + 1] = new Piece(PieceColor.Black, PieceType.Knight);
+        pieces[8 * 7 + 2] = new Piece(PieceColor.Black, PieceType.Bishop);
+        pieces[8 * 7 + 3] = new Piece(PieceColor.Black, PieceType.Queen);
+        pieces[8 * 7 + 4] = new Piece(PieceColor.Black, PieceType.King);
+        pieces[8 * 7 + 5] = new Piece(PieceColor.Black, PieceType.Bishop);
+        pieces[8 * 7 + 6] = new Piece(PieceColor.Black, PieceType.Knight);
+        pieces[8 * 7 + 7] = new Piece(PieceColor.Black, PieceType.Rook);
     }
 }

@@ -89,16 +89,16 @@ public class MoveCastle : IMoveParameter
         switch (CastleType)
         {
             case CastleType.King:
-                board.pieces[y, 6] = new Piece(move.Piece.Color, PieceType.King);
-                board.pieces[y, 5] = new Piece(move.Piece.Color, PieceType.Rook);
-                board.pieces[y, 4] = null;
-                board.pieces[y, 7] = null;
+                board.pieces[6 + y * 8] = new Piece(move.Piece.Color, PieceType.King);
+                board.pieces[5 + y * 8] = new Piece(move.Piece.Color, PieceType.Rook);
+                board.pieces[4 + y * 8] = null;
+                board.pieces[7 + y * 8] = null;
                 break;
             case CastleType.Queen:
-                board.pieces[y, 2] = new Piece(move.Piece.Color, PieceType.King);
-                board.pieces[y, 3] = new Piece(move.Piece.Color, PieceType.Rook);
-                board.pieces[y, 4] = null;
-                board.pieces[y, 0] = null;
+                board.pieces[2 + y * 8] = new Piece(move.Piece.Color, PieceType.King);
+                board.pieces[3 + y * 8] = new Piece(move.Piece.Color, PieceType.Rook);
+                board.pieces[4 + y * 8] = null;
+                board.pieces[0 + y * 8] = null;
                 break;
             default:
                 throw new ChessArgumentException(board, nameof(CastleType), nameof(IMoveParameter.Execute));
@@ -111,16 +111,16 @@ public class MoveCastle : IMoveParameter
         switch (CastleType)
         {
             case CastleType.King:
-                board.pieces[y, 4] = new Piece(move.Piece.Color, PieceType.King);
-                board.pieces[y, 7] = new Piece(move.Piece.Color, PieceType.Rook);
-                board.pieces[y, 6] = null;
-                board.pieces[y, 5] = null;
+                board.pieces[4 + y * 8] = new Piece(move.Piece.Color, PieceType.King);
+                board.pieces[7 + y * 8] = new Piece(move.Piece.Color, PieceType.Rook);
+                board.pieces[6 + y * 8] = null;
+                board.pieces[5 + y * 8] = null;
                 break;
             case CastleType.Queen:
-                board.pieces[y, 4] = new Piece(move.Piece.Color, PieceType.King);
-                board.pieces[y, 0] = new Piece(move.Piece.Color, PieceType.Rook);
-                board.pieces[y, 2] = null;
-                board.pieces[y, 3] = null;
+                board.pieces[4 + y * 8] = new Piece(move.Piece.Color, PieceType.King);
+                board.pieces[0 + y * 8] = new Piece(move.Piece.Color, PieceType.Rook);
+                board.pieces[2 + y * 8] = null;
+                board.pieces[3 + y * 8] = null;
                 break;
             default:
                 throw new ChessArgumentException(board, nameof(CastleType), nameof(IMoveParameter.Undo));
@@ -146,7 +146,7 @@ public class MoveEnPassant : IMoveParameter
         ChessBoard.DropPiece(move, board);
 
         if (CapturedPawnPosition.HasValue)
-            board.pieces[CapturedPawnPosition.Y, CapturedPawnPosition.X] = null;
+            board.pieces[CapturedPawnPosition.P] = null;
         else
             throw new ChessArgumentException(board, nameof(CapturedPawnPosition), nameof(IMoveParameter.Execute));
     }
@@ -155,8 +155,8 @@ public class MoveEnPassant : IMoveParameter
     {
         ChessBoard.RestorePiece(move, board);
 
-        board.pieces[move.NewPosition.Y, move.NewPosition.X] = null;
-        board.pieces[CapturedPawnPosition.Y, CapturedPawnPosition.X] = move.CapturedPiece;
+        board.pieces[move.NewPosition.P] = null;
+        board.pieces[CapturedPawnPosition.P] = move.CapturedPiece;
     }
 }
 
@@ -202,7 +202,7 @@ public class MovePromotion : IMoveParameter
 
         // Making sure original type(pawn) is saved
 
-        board.pieces[move.NewPosition.Y, move.NewPosition.X].Type = PromotionType switch
+        board.pieces[move.NewPosition.P].Type = PromotionType switch
         {
             PromotionType.ToQueen or PromotionType.Default => PieceType.Queen,
             PromotionType.ToRook => PieceType.Rook,
@@ -216,7 +216,7 @@ public class MovePromotion : IMoveParameter
     {
         ChessBoard.RestorePiece(move, board);
 
-        board.pieces[move.OriginalPosition.Y, move.OriginalPosition.X].Type = PieceType.Pawn;
+        board.pieces[move.OriginalPosition.P].Type = PieceType.Pawn;
     }
 
     internal MovePromotion(PromotionType promotionType)

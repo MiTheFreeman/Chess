@@ -1,4 +1,5 @@
 using Chess;
+
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -263,7 +264,7 @@ public class MoveTests
     public async Task TestMovesCount(string fen, int movesCount)
     {
         var board = ChessBoard.LoadFromFen(fen);
-        var moves = await board.Moves(false, false);
+        var moves = await board.MovesAsync(false, false);
 
         Assert.Equal(movesCount, moves.Length);
     }
@@ -276,7 +277,7 @@ public class MoveTests
     public void TestMovesCountOnPosition(string fen, int movesCount, string pos)
     {
         var board = ChessBoard.LoadFromFen(fen);
-        
+
         Assert.Equal(movesCount, board.Moves(new Position(pos), false, false).Length);
     }
 
@@ -390,7 +391,7 @@ public class MoveTests
 
         var numOfMoves = 0;
 
-        foreach (var move in await board.Moves(false, false))
+        foreach (var move in await board.MovesAsync(false, false))
         {
             board.Move(move);
             numOfMoves += await CountMoves(board, depth - 1);
@@ -434,7 +435,7 @@ public class MoveTests
     public void MoveReturnedFromBoardMoves_Should_Be_Valid()
     {
         var board = ChessBoard.LoadFromFen("4k3/8/8/3Pp3/8/8/8/4K3 w - e6 0 2");
-        var moves = board.Moves(new Position(3, 4)).Where(m => m.Parameter is MoveEnPassant);
+        var moves = board.Moves(new Position(3,4)).Where(m => m.Parameter is MoveEnPassant);
 
         Assert.True(board.Move(moves.First()));
     }
@@ -452,7 +453,7 @@ public class MoveTests
     public async Task Moves_QueenPromotion_ShouldHaveSan()
     {
         var board = ChessBoard.LoadFromFen("8/6P1/8/2k5/8/8/8/K7 w - - 0 1");
-        var moves = await board.Moves(generateSan: true);
+        var moves = await board.MovesAsync(generateSan: true);
 
         Assert.All(moves, m => Assert.NotNull(m.San));
 
@@ -465,7 +466,7 @@ public class MoveTests
     public void Test()
     {
         var board = new ChessBoard();
-        var moves = board.Moves(new Position(0,1), checkTurn: false);
+        var moves = board.Moves(new Position(0, 1), checkTurn: false);
 
         Assert.Equal(2, moves.Length);
 

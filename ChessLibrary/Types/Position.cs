@@ -30,6 +30,11 @@ public struct Position
     public bool HasValueY => Y >= 0 && Y <= 7;
 
     /// <summary>
+    /// Position number (x + y * 8)
+    /// </summary>
+    public short P => (short)(X + Y * 8);
+
+    /// <summary>
     /// Horizontal position (File) on chess board
     /// </summary>
     public short X { get; internal set; } = -1;
@@ -55,11 +60,8 @@ public struct Position
         Y = FromRank(position[1]);
     }
 
-    /// <summary>
-    /// Initializes an empty Position:<br/>
-    /// {X = -1, Y = -1}
-    /// </summary>
-    public Position() { }
+    public Position()
+    { }
 
     /// <summary>
     /// Initializes a new Position in chess board<br/>
@@ -69,6 +71,12 @@ public struct Position
     {
         X = x;
         Y = y;
+    }
+
+    public Position(short position)
+    {
+        X = (short)(position % 8);
+        Y = (short)(position / 8);
     }
 
     /// <summary>
@@ -198,9 +206,9 @@ public struct Position
     /// <summary>
     /// Equalizing 2 Positions
     /// </summary>
-    public static bool operator ==(Position a, Position b) => (a.X == b.X && a.Y == b.Y);
+    public static bool operator ==(Position a, Position b) => (a.P == b.P);
     /// <summary>
     /// Equalizing 2 Positions
     /// </summary>
-    public static bool operator !=(Position a, Position b) => !(a.X == b.X && a.Y == b.Y);
+    public static bool operator !=(Position a, Position b) => !(a.P == b.P);
 }

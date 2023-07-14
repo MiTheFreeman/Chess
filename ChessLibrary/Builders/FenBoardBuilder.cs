@@ -11,12 +11,12 @@ namespace Chess;
 
 internal class FenBoardBuilder
 {
-    private readonly Piece?[,] pieces;
+    private readonly Piece?[] pieces;
 
     /// <summary>
     /// "Begin Situation"
     /// </summary>
-    internal Piece?[,] Pieces => (Piece?[,])pieces.Clone();
+    internal Piece?[] Pieces => (Piece?[])pieces.Clone();
 
     internal PieceColor Turn { get; private set; }
 
@@ -40,14 +40,14 @@ internal class FenBoardBuilder
     internal Piece[] WhiteCaptured { get; private set; }
     internal Piece[] BlackCaptured { get; private set; }
 
-    private FenBoardBuilder(Piece?[,] pieces)
+    private FenBoardBuilder(Piece?[] pieces)
     {
         this.pieces = pieces;
     }
 
     private FenBoardBuilder()
     {
-        pieces = new Piece[8, 8];
+        pieces = new Piece[8 * 8];
         EnPassant = new Position();
     }
 
@@ -121,7 +121,7 @@ internal class FenBoardBuilder
             {
                 if (char.IsLetter(fenChar))
                 {
-                    builder.pieces[y, x] = new Piece(fenChar);
+                    builder.pieces[x + y * 8] = new Piece(fenChar);
                     x++;
                 }
                 else if (char.IsDigit(fenChar))
@@ -215,7 +215,7 @@ internal class FenBoardBuilder
 
             for (int j = 0; j < 8 && offset < span.Length; j++)
             {
-                if (pieces[i, j] is null)
+                if (pieces[j + i * 8] is null)
                     emptySquaresCount++;
                 else
                 {
@@ -225,7 +225,7 @@ internal class FenBoardBuilder
                         emptySquaresCount = 0;
                     }
 
-                    span[offset++] = pieces[i, j]!.ToFenChar();
+                    span[offset++] = pieces[j + i * 8]!.ToFenChar();
                 }
             }
 

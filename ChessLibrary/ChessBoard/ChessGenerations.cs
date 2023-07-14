@@ -17,10 +17,11 @@ public partial class ChessBoard
     /// <param name="piecePosition">Position of piece</param>
     /// <param name="allowAmbiguousCastle">Whether Castle move will be e1-g1 AND also e1-h1 which is in fact the same O-O</param>
     /// <param name="generateSan">Whether SAN notation needs to be generated. For higher productivity => set to false</param>
+    /// <param name="checkTurn">Only show moves for current turn color</param>
     /// <returns>All available moves for given piece</returns>
     public Move[] Moves(Position piecePosition, bool allowAmbiguousCastle = false, bool generateSan = true, bool checkTurn = true)
     {
-        if (pieces[piecePosition.Y, piecePosition.X] is null)
+        if (pieces[piecePosition.P] is null)
             throw new ChessPieceNotFoundException(this, piecePosition);
 
         var moves = new List<Move>();
@@ -102,30 +103,27 @@ public partial class ChessBoard
     /// </summary>
     /// <param name="allowAmbiguousCastle">Whether Castle move will be e1-g1 AND also e1-h1 which is in fact the same O-O</param>
     /// <param name="generateSan">San notation needs to be generated</param>
+    /// <param name="checkTurn">Only show moves for current turn color</param>
     /// <returns>All generated moves</returns>
-    public async Task<Move[]> Moves(bool allowAmbiguousCastle = false, bool generateSan = true, bool checkTurn = true)
+    public async Task<Move[]> MovesAsync(bool allowAmbiguousCastle = false, bool generateSan = true, bool checkTurn = true)
     {
         var moves = new ConcurrentBag<Move>();
         var tasks = new List<Task>();
 
-        for (short i = 0; i < 8; i++)
+        for (short i = 0; i < 8 * 8; i++)
         {
-            for (short j = 0; j < 8; j++)
+            if (pieces[i] is not null)
             {
-                if (pieces[i, j] is not null)
-                {
-                    short x = j;
-                    short y = i;
+                short p = i;
 
-                    tasks.Add(Task.Run(() =>
+                tasks.Add(Task.Run(() =>
+                {
+                    var generatedMoves = Moves(new Position(p), allowAmbiguousCastle, generateSan, checkTurn);
+                    foreach (var move in generatedMoves)
                     {
-                        var generatedMoves = Moves(new Position { Y = y, X = x }, allowAmbiguousCastle, generateSan, checkTurn);
-                        foreach (var move in generatedMoves)
-                        {
-                            moves.Add(move);
-                        }
-                    }));
-                }
+                        moves.Add(move);
+                    }
+                }));
             }
         }
 
@@ -141,7 +139,7 @@ public partial class ChessBoard
     /// <returns>Potential positions</returns>
     public Position[] GeneratePositions(Position piecePosition)
     {
-        if (pieces[piecePosition.Y, piecePosition.X] is null)
+        if (pieces[piecePosition.P] is null)
             throw new ChessPieceNotFoundException(this, piecePosition);
 
         return GeneratePositions(piecePosition, this);
@@ -189,22 +187,22 @@ public partial class ChessBoard
         {
             // Castle options
 
-            var rook = board[new Position() { X = 0, Y = piecePosition.Y }];
+            var rook = board[new Position(0, piecePosition.Y)];
 
             if (board[1, piecePosition.Y] is null && board[2, piecePosition.Y] is null && board[3, piecePosition.Y] is null)
                 if (rook?.Type == PieceType.Rook && rook.Color == board[piecePosition].Color)
                 {
-                    positions.Add(new Position() { X = 0, Y = piecePosition.Y }); // TODO verbose option
-                    positions.Add(new Position() { X = 2, Y = piecePosition.Y });
+                    positions.Add(new Position(0, piecePosition.Y)); // TODO verbose option
+                    positions.Add(new Position(2, piecePosition.Y));
                 }
 
-            rook = board[new Position() { X = 7, Y = piecePosition.Y }];
+            rook = board[new Position(7, piecePosition.Y)];
 
             if (board[5, piecePosition.Y] is null && board[6, piecePosition.Y] is null)
                 if (rook?.Type == PieceType.Rook && rook.Color == board[piecePosition].Color)
                 {
-                    positions.Add(new Position() { X = 6, Y = piecePosition.Y });
-                    positions.Add(new Position() { X = 7, Y = piecePosition.Y }); // TODO verbose option
+                    positions.Add(new Position(6, piecePosition.Y));
+                    positions.Add(new Position(7, piecePosition.Y)); // TODO verbose option
                 }
         }
     }
@@ -248,33 +246,33 @@ public partial class ChessBoard
         short nextY = (short)(y + step);
 
         if (board[x, nextY] is null)
-            positions.Add(new Position() { X = x, Y = nextY });
+            positions.Add(new Position(x, nextY));
 
         short rightX = (short)(x + 1);
         if (rightX < 8)
         {
             if (board[rightX, nextY] is not null && board[rightX, nextY].Color != board[piecePosition].Color)
-                positions.Add(new Position() { X = rightX, Y = nextY });
+                positions.Add(new Position(rightX, nextY) );
 
-            else if (IsValidEnPassant(new Move(piecePosition, new Position() { Y = nextY, X = rightX }) { Piece = board[piecePosition] }, board, step, 1))
-                positions.Add(new Position() { X = rightX, Y = nextY });
+            else if (IsValidEnPassant(new Move(piecePosition, new Position(rightX, nextY)) { Piece = board[piecePosition] }, board, step, 1))
+                positions.Add(new Position(rightX, nextY));
         }
 
         short leftX = (short)(x - 1);
         if (leftX > -1)
         {
             if (board[leftX, nextY] is not null && board[leftX, nextY].Color != board[piecePosition].Color)
-                positions.Add(new Position() { X = leftX, Y = nextY });
+                positions.Add(new Position(leftX, nextY));
 
-            else if (IsValidEnPassant(new Move(piecePosition, new Position() { Y = nextY, X = leftX }) { Piece = board[piecePosition] }, board, step, -1))
-                positions.Add(new Position() { X = leftX, Y = nextY });
+            else if (IsValidEnPassant(new Move(piecePosition, new Position(leftX, nextY)) { Piece = board[piecePosition] }, board, step, -1))
+                positions.Add(new Position(leftX, nextY));
         }
 
         // 2 forward
         if ((y == 1 && board[piecePosition].Color == PieceColor.White || y == 6 && board[piecePosition].Color == PieceColor.Black)
             && board[x, nextY] is null
             && board[x, (short)(y + step * 2)] is null)
-            positions.Add(new Position() { X = x, Y = (short)(y + step * 2) });
+            positions.Add(new Position(x, (short)(y + step * 2)));
     }
 
     // Directions for which the bishop can move
@@ -297,14 +295,14 @@ public partial class ChessBoard
                 {
                     // If the current piece is not of the same color as the original piece, add it to the list of positions
                     if (currentPiece.Color != board[piecePosition].Color)
-                        positions.Add(new Position() { X = currentPosition.x, Y = currentPosition.y });
+                        positions.Add(new Position(currentPosition.x, currentPosition.y));
 
                     // Break out of the loop
                     break;
                 }
 
                 // Add the current position to the list of positions
-                positions.Add(new Position() { X = currentPosition.x, Y = currentPosition.y });
+                positions.Add(new Position(currentPosition.x, currentPosition.y));
 
                 // Move to the next position in the current direction
                 currentPosition.x += direction.x;
@@ -328,11 +326,11 @@ public partial class ChessBoard
                 if (board[x, y] is not null)
                 {
                     if (board[x, y]!.Color != board[piecePosition]!.Color)
-                        positions.Add(new Position() { X = x, Y = y });
+                        positions.Add(new Position(x, y));
                     break;
                 }
 
-                positions.Add(new Position() { X = x, Y = y });
+                positions.Add(new Position(x, y));
 
                 x += direction.x;
                 y += direction.y;

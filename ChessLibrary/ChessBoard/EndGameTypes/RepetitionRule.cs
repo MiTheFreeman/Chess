@@ -67,17 +67,14 @@ internal class ChessBoardComparer : IEqualityComparer<ChessBoard>
         {
             isEqual = true;
 
-            for (int i = 0; i < x.pieces.GetLength(0) && isEqual; i++)
+            for (int i = 0; i < 8 * 8 && isEqual; i++)
             {
-                for (int j = 0; j < x.pieces.GetLength(1) && isEqual; j++)
-                {
-                    if (x.pieces[i, j] is null != y.pieces[i, j] is null)
-                        isEqual = false;
+                if (x.pieces[i] is null != y.pieces[i] is null)
+                    isEqual = false;
 
-                    if (x.pieces[i, j] is not null && y.pieces[i, j] is not null)
-                    {
-                        isEqual = x.pieces[i, j].Color == y.pieces[i, j].Color && x.pieces[i, j].Type == y.pieces[i, j].Type;
-                    }
+                if (x.pieces[i] is not null && y.pieces[i] is not null)
+                {
+                    isEqual = x.pieces[i].Color == y.pieces[i].Color && x.pieces[i].Type == y.pieces[i].Type;
                 }
             }
 
